@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<title>Metawatch: Current readings</title>
+	<style>
+	body { font-family: "Open Sans", verdana, arial, sans-serif; font-size: 10pt; }
+	.disclaimer { margin-left: 25px; }
+	</style>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+
+<div id="chart" style="width:1024px; height:768px;"></div>
+
+<div class="disclaimer">
+At Pointe Fortune, the water level is estimated when below about 23.3m, with actual readings above that.
+<p>
+Hydrological forecasting is based on meteorological forecasting and is therefore
+subject to the same level of uncertainty.
+<br>
+These data are provided for information purposes only.
+See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target="_blank">ORRPB site</a>.
+</div>
+
+<script>
+	/*globals Plotly d3*/
+	window.d3 = Plotly.d3;
+
+	function getQueryArgs() {
+		var q = d3.map(), dec = decodeURIComponent;
+		window.location.search.slice(1).split("&").forEach(function(s) {
+			if (s) {
+				var i = s.indexOf("="),
+						k = i === -1 ? s  : s.slice(0, i),
+						v = i === -1 ? "" : s.slice(i+1);
+				q.set(dec(k), dec(v));
+			}
+		});
+		return q;
+	}
+
+	var queryArgs = getQueryArgs();
+	window.queryArgs = queryArgs;
+
+	var options = {
+		channel: 493058,
+		start: queryArgs.get("start") || "2020-01-01T00:00:00-04:00",
+		days: Number(queryArgs.get("days")),
+		showFlow: (queryArgs.get("showFlow") || "true") === "true",
+		timescale: queryArgs.has("timescale") ? queryArgs.get("timescale") : 15,  // minutes
+		dateRange: [addDays(new Date(), -10), addDays(new Date(), 3)]
+	};
+	options.showPeaks = (queryArgs.get("showPeaks") || String(options.showFlow)) === "true";
+	options.showThresholds = (queryArgs.get("showThresholds") || "false") === "true";
+	options.showingFlow = options.showFlow || options.showPeaks || options.showThresholds;
+
+	var FIELDS = [
+		{num: 1, name: "Carillon flow (estimate)", yaxis: 'y', color: '#ff7f0e'},
+		{num: 5, name: "Pointe Fortune level", yaxis: 'y2', color: '#1f77b4'},
+		{num: 4, name: "Pointe Calumet level (actual)", yaxis: 'y2', color: '#2ca02c'}
+	];
+
+	function level2017(flow) {
+		return 0.00042*flow + 21.47;  // intercept is actually 21.4531, but add ~1.5 cm for aesthetics / reduced overlap
+	}
+
+	var FLOW_RANGE = [1000, 12600];
+	var LEVEL_RANGE = FLOW_RANGE.map(level2017);
+
+	var annotations = [];
+	if (options.showThresholds) {
+		annotations = annotations.concat([
+			{label: "Head Pond Reduction starts", value: 4000, color: "lightgrey"},
+			{label: "Head Pond Reduction ends", value: 5000, color: "lightgrey"}
+		]);
+	}
+	if (options.showPeaks) {
+		annotations = annotations.concat([
+			{label: "100-year", value: 8549, color: "#D62728"},
+			{label: "20-year", value: 7364, color: "#D69927"},
+			{label: "2-year", value: 5265, color: "lightgrey"}
+		]);
+	}
+
+	var ANNOTATION_X = 0.27;
+
+	function flowAnnotationNote(d) {
+		var val = d.value;
+		return {
+			text: d.label + " (" + val + ")",
+			showarrow: false,
+			x: ANNOTATION_X, xref: "paper", xanchor: "right", xshift: -5,
+			y: val, yref: "y",
+			bgcolor: "white",
+			borderpad: 2
+		};
+	}
+
+	function flowAnnotationShape(d) {
+		var val = d.value;
+		return {
+			type: "line", layer: "below",
+			x0: ANNOTATION_X, x1: 1, xref: "paper",
+			y0: val, y1: val, yref: "y",
+			line: {color: d.color, width: 2, dash: "dot"}
+		};
+	}
+
+	function extract(data, col) {
+		return data.map(function(d) { return d[col]; });
+	}
+
+	function addDays(dt, days, mins) {
+		return new Date(dt.valueOf() + (days || 0) * 24*60*60*1000 + (mins || 0) * 60*1000);
+	}
+
+	var tsQueryArgs = [
+		options.start
+			? "start=" + encodeURIComponent(options.start)
+			: "days=" + encodeURIComponent(options.days),
+		"timescale=" + encodeURIComponent(options.timescale)
+	].join("&");
+	var url = "https://thingspeak.com/channels/" + options.channel + "/feed.json?" + tsQueryArgs;
+	d3.json(url, function(err, data) {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		window.data = data;
+
+		var timestamps = extract(data.feeds, 'created_at').map(function (d) {
+			return new Date(d);
+		});  // convert to Date to show in local timezone
+
+		var traces = [];
+		FIELDS.forEach(function(field) {
+			if (options.showFlow || field.num !== 1) {
+				var fieldName = 'field' + field.num, prev;
+				var values = extract(data.feeds, fieldName).map(function (d) {
+					return d ? prev = Number(d) : prev;
+				});
+				traces.push({
+					name: field.name,
+					x: timestamps,
+					y: values,
+					mode: 'lines',
+					yaxis: field.yaxis,
+					connectgaps: true,
+					line: {
+						color: field.color
+					}
+				});
+			}
+		});
+		window.traces = traces;
+
+		var layout = {
+			title: "Current flow rate at Carillon dam, and nearby water levels",
+			margins: {l: 80, r: 80, t: 80, b: 80, pad: 8},
+			xaxis: {
+				type: 'date',
+				nticks: 12,
+				hoverformat: "%a, %b %e %H:%M",
+				rangeslider: {visible: true},
+				range: options.dateRange
+			},
+			yaxis: {
+				title: "Flow rate (m³/sec)",
+				range: FLOW_RANGE,
+				side: 'left',
+				showgrid: false,
+				exponentformat: "none",
+				nticks: 25,
+				separatethousands: true,
+				showspikes: false,
+				overlaying: 'y2'
+			},
+			yaxis2: {
+				title: "Water level (m)",
+				range: LEVEL_RANGE,
+				side: 'right',
+				showgrid: true,
+				exponentformat: "none",
+				separatethousands: true,
+				showspikes: false,
+				dtick: 0.2
+			},
+			legend: {
+				orientation: 'h',
+				x: (options.showFlow ? 0.15 : 0.27),
+				y: 1.03
+			},
+			hovermode: 'x',
+			hoverlabel: { namelength: -1 },
+			annotations: annotations.map(flowAnnotationNote),
+			shapes: annotations.map(flowAnnotationShape)
+		};
+		if (!options.showingFlow) {
+			delete layout.yaxis;
+		}
+		window.layout = layout;
+
+		window.plot = Plotly.plot('chart', traces, layout);
+
+		var forecast_url = "https://thingspeak.com/channels/452937/feed.json?results=1&" + tsQueryArgs;
+		d3.json(forecast_url, function(err, forecast_data) {
+			window.forecast_data = forecast_data;
+			if (err) {
+				console.log(err);  // log but continue if forecast missing or failed
+			}
+
+			var forecast = forecast_data && forecast_data.feeds && forecast_data.feeds[0];
+			if (forecast) {
+				traces = [];
+				var dt = new Date(forecast.created_at.replace('Z', '-04:00'));  // treat UTC date as EDT
+				for (var d = 0; d < 4; ++d) {
+					var
+						f = d*2+1,
+						val1 = Number(forecast['field' + f]),
+						val2 = Number(forecast['field' + (f+1)])
+						x = [],
+						y1 = [];
+						y2 = [];
+					var
+						minsPerDay = 60*24,
+						startMin = d === 0 ? 12*60 : 0,
+						incr = Math.min(240, Math.max(1, options.timescale));
+					for (var m = startMin; m <= minsPerDay; m += incr) {
+						x.push(addDays(dt, d, m < minsPerDay ? m : m-1));
+						y1.push(val1);
+						y2.push(val2);
+					}
+					if (options.showFlow) {
+						traces.push(
+							{
+								name: 'Carillon flow forecast',
+								x: x,
+								y: y2,
+								mode: 'lines',
+								yaxis: 'y',
+								line: {
+									// shape: 'hv',
+									color: FIELDS[0].color,
+									dash: 'dashdot'
+								},
+								showlegend: false
+							}
+						);
+					}
+					traces.push(
+						{
+							name: 'Pointe Fortune level forecast',
+							x: x,
+							y: y1,
+							mode: 'lines',
+							yaxis: 'y2',
+							line: {
+								// shape: 'hv',
+								color: FIELDS[1].color,
+								dash: 'dashdot'
+							},
+							showlegend: false
+						}
+					);
+				}
+				Plotly.plot('chart', traces, layout);
+			}
+		});
+
+	});
+</script>
+
+</body>
+</html>

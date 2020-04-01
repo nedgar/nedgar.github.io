@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node-Radar Hydrometrics</title>
+    <!-- <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,700,300,100' rel='stylesheet' type='text/css'> -->
+    <link rel="icon" href="images/water-swirl-th.png">
+    <link href="css/simplegrid.css" rel="stylesheet" media="screen">
+    <link href="css/style.css" rel="stylesheet" media="screen">
+</head>
+
+<body>
+    <div class="title content">
+        <div class="grid">
+            <div class="col-1-1">
+                <div class="content">
+                    <h1>Node-Radar</h1>
+                    <h2>Hydrometrics data for the Ottawa River</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="grid">
+            <div class="col-1-2">
+                <p style="text-align: center"><a style="width:300px;" class="button" href="charts/Carillon.html">Chart:<br>Flow rate at Carillon Dam</a></p>
+            </div>
+            <div class="col-1-2">
+                <p style="text-align: center"><a style="width:350px;" class="button" href="charts/Metawatch.html">Chart:<br>Water level at Pointe Fortune</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="links">
+        <div class="grid">
+            <div>A project by Nick Edgar and Metawatch.</div>
+            <div class="col-1-3">
+                <ul>
+                    <li>Twitter: <a href="https://twitter.com/nedgar">@nedgar</a></li>
+                    <li>GitHub: <a href="https://github.com/nedgar">@nedgar</a></li>
+                </ul>
+            </div>
+            <div class="col-1-3">
+                <ul>
+                    <li>Twitter: <a href="https://twitter.com/CarillonDam">@CarillonDam</a></li>
+                    <li>Facebook: <a href="https://www.facebook.com/BarrageDeCarillon/">Barrage de Carillon</a></li>
+                </ul>
+            </div>
+            <div class="col-1-3">
+                Built using <a href="https://d3js.org">D3.js</a>, <a href="https://plot.ly/javascript/">Plotly.js</a>, and <a href="https://nodered.org/">Node-RED</a>.
+                <br>
+                Free vector graphics by <a target="_blank" href="https://www.vecteezy.com">Vecteezy</a>.
+            </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script>
+
+    $(function() {
+        $("ul.customisations h4").click(function(ev) {
+            $(this).next('.custom-content').slideToggle();
+        });
+    });
+    </script>
+</body>
+</html>
