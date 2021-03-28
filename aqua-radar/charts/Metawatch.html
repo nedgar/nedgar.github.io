@@ -22,7 +22,7 @@ Hydrological forecasting is based on meteorological forecasting and is therefore
 subject to the same level of uncertainty.
 <br>
 These data are provided for information purposes only.
-See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target="_blank">ORRPB site</a>.
+See also disclaimers at the <a href="http://ottawariver.ca/terms-and-policies/" target="_blank">ORRPB site</a>.
 </div>
 
 <script>
@@ -47,7 +47,7 @@ See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target=
 
 	var options = {
 		channel: 493058,
-		start: queryArgs.get("start") || "2020-01-01T00:00:00-04:00",
+		start: queryArgs.get("start") || "2021-01-01T00:00:00-04:00",
 		days: Number(queryArgs.get("days")),
 		showFlow: (queryArgs.get("showFlow") || "true") === "true",
 		timescale: queryArgs.has("timescale") ? queryArgs.get("timescale") : 15,  // minutes

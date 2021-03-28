@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<title>Carillon Dam water level &amp; flow rate: 2020 estimated vs 2017 actual</title>
+<title>Carillon Dam water level &amp; flow rate: 2021 estimated vs 2017 actual</title>
 <style>
 body { font-family: "Open Sans", verdana, arial, sans-serif; font-size: 10pt; }
 .disclaimer { margin-left: 25px; }
@@ -25,7 +25,7 @@ Disclaimer: Hydrological forecasting is based on meteorological forecasting and 
 subject to the same level of uncertainty.
 <br/>
 These data are provided for information purposes only.
-See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target="_blank">ORRPB site</a>.
+See also disclaimers at the <a href="http://ottawariver.ca/terms-and-policies/" target="_blank">ORRPB site</a>.
 </div>
 
 <script>
@@ -53,7 +53,7 @@ See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target=
 	var options = {
 		channel: 493058,
 		simple: simple,
-		start: queryArgs.get("start") || "2020-01-01T00:00:00-04:00",
+		start: queryArgs.get("start") || "2021-01-01T00:00:00-04:00",
 		days: Number(queryArgs.get("days")),
 		showLegend: (queryArgs.get("showLegend") || showDefault) === "true",
 		showForecast: (queryArgs.get("showForecast") || showDefault) === "true",
@@ -67,7 +67,7 @@ See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target=
 
 	var FIELDS = [
 		{name: "2017 flow", color: '#1f77b4'},
-		{name: "2020 flow", color: '#ff7f0e'}
+		{name: "2021 flow", color: '#ff7f0e'}
 	];
 
 //	function level2017(flow) {
@@ -124,7 +124,7 @@ See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target=
 		return new Date(dt.valueOf() + (days || 0) * 24*60*60*1000 + (mins || 0) * 60*1000);
 	}
 
-	d3.csv("HQ-master-2017-hourly-max with 2020 year.csv", function(err, data) {
+	d3.csv("HQ-master-2017-hourly-max with 2021 year.csv", function(err, data) {
 		if (err) {
 			console.log(err);
 			return;
@@ -180,7 +180,7 @@ See also disclaimers at the <a href="http://ottawariver.ca/forecast.php" target=
 			var traces = [traceHistFlow, traceCurFlow];
 
 			var layout = {
-				title: "Carillon Dam flow rates: 2020 estimated vs 2017 actual",
+				title: "Carillon Dam flow rates: 2021 estimated vs 2017 actual",
 				margins: {l: 80, r: 80, t: 80, b: 80, pad: 8},
 				xaxis: {
 					type: 'date',
